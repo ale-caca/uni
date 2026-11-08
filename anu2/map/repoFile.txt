@@ -1,0 +1,73 @@
+package repository;
+
+import domain.Entity;
+import domain.validator.Validation;
+
+import java.io.*;
+
+//clasa mosteneste InMemoryRepo pt persistenta
+public abstract class AbstractFileRepository<ID, E extends Entity<ID>> extends InMemoryRepository<ID, E> {
+    protected String filename;
+
+    //constructor
+    public AbstractFileRepository(Validation<E> validator, String fileName) {
+        super(validator);//super apeleaza din clasa mama validatorul
+        this.filename = fileName;
+        loadData();
+    }
+
+    //clasa abstracta (copii fac, nu clasa mama)
+    public abstract E createEntity(String line);
+    public abstract String saveEntity(E entity);
+
+    //salveaza entitate
+    @Override
+    public E save(E entity) {
+        E e = super.save(entity);
+        if (e == null)
+            writeToFile();
+        return e;
+    }
+
+    //scrie in fisier
+    private void writeToFile() {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filename))) {
+            for (E entity : entitati.values()) {
+                String ent = saveEntity(entity);
+                writer.write(ent);
+                writer.newLine();
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    //metoda sa load data from file
+    private void loadData() {
+        try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                E entity = createEntity(line);
+                super.save(entity);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    //metoda de stergere
+    @Override
+    public E delete(ID id) {
+        E entity = super.delete(id);
+        if (entity != null) writeToFile();
+        return entity;
+    }
+
+    //metoda de update
+    @Override
+    public E update(E entity) {
+        E entity2 = super.update(entity);
+        if (entity2 == null) writeToFile();
+        return entity2;
+    }
+}

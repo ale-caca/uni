@@ -1,0 +1,7 @@
+Get-ChildItem -Recurse -Filter *.java | ForEach-Object {
+    Write-Output "=================================================="
+    Write-Output "FILE: $($_.FullName)"
+    Write-Output "=================================================="
+    Get-Content $_.FullName
+    Write-Output "`n`n"
+} > map.txt

@@ -1,0 +1,50 @@
+package repository;
+
+import domain.Friendship;
+import domain.User;
+import domain.validator.Validation;
+
+public class FriendshipFileRepository extends AbstractFileRepository<Long, Friendship> {
+    public FriendshipFileRepository(Validation<Friendship> validation, String fileName) {
+        super(validation, fileName);
+    }
+    //da override la functia din clasa parinte la cum se citeste si creeaza un obiect
+    @Override
+    public Friendship createEntity(String line) {
+        String[] fields = line.split(",");
+        Long idFriendship = Long.parseLong(fields[0]);
+
+        Long idUser1 = Long.parseLong(fields[1]);
+        String firstName1 = fields[2];
+        String lastName1 = fields[3];
+
+        Long idUser2 = Long.parseLong(fields[4]);
+        String firstName2 = fields[5];
+        String lastName2 = fields[6];
+
+        User user1 = new User(firstName1, lastName1);
+        user1.setId(idUser1);
+
+        User user2 = new User(firstName2, lastName2);
+        user2.setId(idUser2);
+
+        Friendship friend = new Friendship(user1, user2);
+        friend.setId(idFriendship);
+        return friend;
+    }
+
+    //spune cum se salveaza in fisier o prietenie
+    @Override
+    public String saveEntity(Friendship entity) {
+        Long idFriendship = entity.getId();
+
+        Long idUser1 = entity.getFriend1().getId();
+        String firstName1 = entity.getFriend1().getFirstName();
+        String lastName1 = entity.getFriend1().getLastName();
+
+        Long idUser2 = entity.getFriend2().getId();
+        String firstName2 = entity.getFriend2().getFirstName();
+        String lastName2 = entity.getFriend2().getLastName();
+        return idFriendship + "," + idUser1 + "," + firstName1+","+lastName1+","+idUser2+","+firstName2+","+lastName2;
+    }
+}

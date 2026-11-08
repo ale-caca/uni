@@ -1,0 +1,30 @@
+package repository;
+
+import domain.User;
+import domain.validator.Validation;
+
+public class UserFileRepository extends AbstractFileRepository<Long, User> {
+    public UserFileRepository(Validation<User> userValidation, String fileName) {
+        super(userValidation, fileName);
+    }
+    //implementeaza din clasa parinte cum se citeste un obiect de tip User
+    @Override
+    public User createEntity(String line) {
+        String[] fields = line.split(",");
+        Long id = Long.parseLong(fields[0]);
+        String firstName = fields[1];
+        String lastName = fields[2];
+        User toBeUser = new User(firstName, lastName);
+        toBeUser.setId(id);
+        return toBeUser;
+
+    }
+    //tot din clasa parinte cum se salveaza un user in fisier
+    @Override
+    public String saveEntity(User entity) {
+        Long id=entity.getId();
+        String firstName = entity.getFirstName();
+        String lastName = entity.getLastName();
+        return id+","+firstName+","+lastName;
+    }
+}

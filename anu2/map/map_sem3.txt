@@ -1,0 +1,27 @@
+generice-->Collections
+clase,metode
+public class Shape <T> {
+blabla
+} 
+
+<T>=Circle, Square
+=> Shape <Circle>
+
+
+int float short double Boolean 
+|			^
+|			|
+autoboxing	   unboxing
+integer float short double -->wrapper classes
+
+Sortari
+1.Collections sort(list);
+tipul din colectie implementeaza comparable
+
+2.Collection sort(list,comparator)
+
+class B {
+	class C{
+        }
+}
+inner classes
