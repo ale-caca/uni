@@ -20,7 +20,6 @@ public class Main {
         // Validatorul de baza pentru User
         Validation<User> baseUserValidator = new UserValidation();
 
-        // Cerinta 1: Regula noua scrisa ca lambda si compusa prin andThen, fara modificarea clasei UserValidation
         Validation<User> nameLetterValidator = user -> {
             boolean firstNameValid = user.getFirstName().chars().allMatch(Character::isLetter);
             boolean lastNameValid = user.getLastName().chars().allMatch(Character::isLetter);

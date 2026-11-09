@@ -3,4 +3,3 @@
 3;ili;chertes
 4;iuli;pop
 5;georgi;potra
-6;aa;bb

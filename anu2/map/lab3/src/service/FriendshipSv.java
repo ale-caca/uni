@@ -12,7 +12,7 @@ import java.util.function.Predicate;
 import java.util.stream.StreamSupport;
 
 /**
- * Service class responsible for operations specific to friendship relations.
+ * Service class responsible for operations specific to friendship relations
  */
 public class FriendshipSv implements Service<Friendship> {
     private final Repository<Long, Friendship> repository;

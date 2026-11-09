@@ -42,7 +42,7 @@ public class UserSv implements Service<User> {
         Optional<User> userOptional = Optional.ofNullable(repository.findOne(userId));
 
         userOptional.ifPresent(u -> {
-            // Extragem ID-urile prieteniilor fara efecte secundare in filter/map
+            //extrag ID-urile prieteniilor fara efecte secundare in filter/map
             List<Long> friendshipsToDelete = StreamSupport.stream(friendshipRepository.findAll().spliterator(), false)
                     .filter(f -> f.getFriend1().getId().equals(userId) || f.getFriend2().getId().equals(userId))
                     .map(Entity::getId)
