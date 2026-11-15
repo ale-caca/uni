@@ -55,5 +55,15 @@ public interface Repository<ID, E extends Entity<ID>> {
                 .filter(filter)
                 .collect(Collectors.toList());
     }
+
+    /**
+     * Updates an existing entity.
+     *
+     * @param entity the entity to update
+     * @return null if the entity was updated, or the entity itself if its ID does not exist
+     * @throws IllegalArgumentException if the entity is null
+     * @throws domain.validator.ValidationException if the entity attributes are invalid
+     */
+    E update(E entity);
 }
 

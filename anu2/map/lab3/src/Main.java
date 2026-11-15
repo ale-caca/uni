@@ -29,7 +29,7 @@ public class Main {
         };
 
         // Compunerea validatorilor
-        Validation<User> userValidator = baseUserValidator.andThen(nameLetterValidator);
+        Validation<User> userValidator = baseUserValidator;
 
         // Validatorul pentru Friendship
         Validation<Friendship> friendshipValidator = new FriendshipValidation();
@@ -79,9 +79,6 @@ public class Main {
                     case 8:
                         console.showBiggestCommunity();
                         break;
-                    case 9:
-                        console.filterUsersByCriteria();
-                        break;
                     case 10:
                         condition = false;
                         break;
@@ -92,11 +89,9 @@ public class Main {
             } catch (InputMismatchException e) {
                 System.out.println("Please enter a valid option!\n");
                 scanner.nextLine();
-            } catch (RepositoryException e) {
-                System.out.println(e.getMessage());
-            } catch (Exception e) {
-                System.out.println(e.getMessage());
-            }
+            } catch (ValidationException | RepositoryException | IllegalArgumentException e) {
+            System.out.println("Eroare: " + e.getMessage());
+        }
         }
     }
 }

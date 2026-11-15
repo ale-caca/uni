@@ -4,6 +4,7 @@ import domain.Friendship;
 import domain.User;
 import domain.validator.Validation;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.EnumMap;
@@ -12,7 +13,6 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
-
 
 /**
  * Factory class creating repository instances based on config.properties using Map and functional interfaces.
@@ -42,16 +42,15 @@ public class RepositoryFactory {
             if (configType == null) {
                 throw new RepositoryException("Proprietatea repository.type lipseste!");
             }
-            this.type = RepositoryType.valueOf(configType.toUpperCase());
+            this.type = RepositoryType.valueOf(configType.trim().toUpperCase());
         } catch (IllegalArgumentException e) {
             throw new RepositoryException("Tipul de repository din config.properties este invalid!");
-        } catch (Exception e) {
+        } catch (IOException e) {
             throw new RepositoryException("Eroare la incarcarea configuratiei: " + e.getMessage(), e);
         }
     }
 
     private void initUserFactories() {
-        // Referinta la constructor: InMemoryRepository::new
         userRepoFactories.put(RepositoryType.MEMORY, InMemoryRepository::new);
         userRepoFactories.put(RepositoryType.FILE, validator -> {
             String file = properties.getProperty("utilizatori.file");
@@ -74,10 +73,7 @@ public class RepositoryFactory {
             if (file == null) {
                 throw new RepositoryException("Calea prietenii.file lipseste!");
             }
-
-            // Contor local doar pentru incarcarea initiala a fisierului, cu ID-uri simple: 1, 2, 3...
             AtomicLong counter = new AtomicLong(1L);
-
             return new FileRepository<>(
                     validator,
                     file,
@@ -94,32 +90,25 @@ public class RepositoryFactory {
 
                         Friendship f = new Friendship(u1, u2);
                         f.setDate(date);
-                        f.setId(counter.getAndIncrement()); // 1, 2, 3... normal, fara numere mari
+                        f.setId(counter.getAndIncrement());
                         return f;
                     },
                     f -> f.getFriend1().getId() + ";" + f.getFriend2().getId() + ";" + f.getDate()
             );
         });
+        friendshipRepoFactories.put(RepositoryType.DATABASE, validator ->
+                new PrietenieDbRepository(validator,
+                        properties.getProperty("db.url"),
+                        properties.getProperty("db.user"),
+                        properties.getProperty("db.password")));
     }
 
-    /**
-     * Creates a User repository instance according to the configured repository type.
-     *
-     * @param validator the validator to use
-     * @return the repository instance
-     */
     public Repository<Long, User> createUtilizatorRepository(Validation<User> validator) {
         return Optional.ofNullable(userRepoFactories.get(type))
                 .map(factory -> factory.apply(validator))
                 .orElseThrow(() -> new RepositoryException("Tip de repository necunoscut pentru utilizatori: " + type));
     }
 
-    /**
-     * Creates a Friendship repository instance according to the configured repository type.
-     *
-     * @param validator the validator to use
-     * @return the repository instance
-     */
     public Repository<Long, Friendship> createPrietenieRepository(Validation<Friendship> validator) {
         return Optional.ofNullable(friendshipRepoFactories.get(type))
                 .map(factory -> factory.apply(validator))

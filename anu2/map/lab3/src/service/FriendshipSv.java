@@ -65,6 +65,34 @@ public class FriendshipSv implements Service<Friendship> {
         return repository.save(friendship);
     }
 
+    /**
+     * Creates and saves a friendship between two users identified by their first and last names.
+     *
+     * @param firstName1 the first user's first name
+     * @param lastName1  the first user's last name
+     * @param firstName2 the second user's first name
+     * @param lastName2  the second user's last name
+     * @return {@code null} if saved successfully, or the entity if it already exists
+     * @throws ValidationException             if either user does not exist or the friendship is invalid
+     * @throws repository.RepositoryException  if a database access error occurs
+     */
+    public Friendship saveByNames(String firstName1, String lastName1, String firstName2, String lastName2) {
+        User user1 = StreamSupport.stream(userRepository.findAll().spliterator(), false)
+                .filter(u -> u.getFirstName().equalsIgnoreCase(firstName1.trim()) &&
+                        u.getLastName().equalsIgnoreCase(lastName1.trim()))
+                .findFirst()
+                .orElseThrow(() -> new ValidationException("Utilizatorul " + firstName1 + " " + lastName1 + " nu a fost gasit!"));
+
+        User user2 = StreamSupport.stream(userRepository.findAll().spliterator(), false)
+                .filter(u -> u.getFirstName().equalsIgnoreCase(firstName2.trim()) &&
+                        u.getLastName().equalsIgnoreCase(lastName2.trim()))
+                .findFirst()
+                .orElseThrow(() -> new ValidationException("Utilizatorul " + firstName2 + " " + lastName2 + " nu a fost gasit!"));
+
+        return save(user1.getId(), user2.getId());
+    }
+
+
     @Override
     public Iterable<Friendship> findAll() {
         return repository.findAll();

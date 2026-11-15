@@ -190,6 +190,8 @@ De ce am facut asa:
 
 Am lasat bucle clasice doar in doua locuri unde chiar aveau sens:
 
-1. `while (condition)` in Main: este bucla clasica pentru meniul din consola, unde asteptam comenzi de la tastatura. Aici nu parcurgem o colectie din memorie, ci gestionam interactiunea cu utilizatorul.
-2. `while (!queue.isEmpty())` in algoritmul BFS din NetworkSv: este bucla de baza pentru explorarea grafului cu o coada. Deoarece coada se modifica continuu cat timp parcurgem graful, bucla while e mult mai clara si mai naturala decat daca am fi incercat sa fortam o recursivitate artificiala sau un stream complicat. Totusi, parcurgerea vecinilor din interiorul acestei bucle a fost trecuta pe Stream API.
-================================================================================
+1. `while (condition)` in Main: este bucla clasica pentru meniul din consola, unde asteptam comenzi de la tastatura.
+Aici nu parcurgem o colectie din memorie, ci gestionam interactiunea cu utilizatorul.
+2. `while (!queue.isEmpty())` in algoritmul BFS din NetworkSv: este bucla de baza pentru explorarea grafului cu o coada.
+Deoarece coada se modifica continuu cat timp parcurgem graful, bucla while e mult mai clara si mai naturala decat daca
+am fi incercat sa fortam o recursivitate artificiala sau un stream complicat. Totusi, parcurgerea vecinilor din interiorul acestei bucle a fost trecuta pe Stream API.

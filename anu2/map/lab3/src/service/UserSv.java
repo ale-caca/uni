@@ -4,6 +4,7 @@ import domain.Entity;
 import domain.Friendship;
 import domain.User;
 import repository.Repository;
+import repository.RepositoryException;
 
 import java.util.List;
 import java.util.Objects;
@@ -57,11 +58,27 @@ public class UserSv implements Service<User> {
         return userOptional;
     }
 
+//    public User save(String firstName, String lastName) {
+//        Long newId = genererateID();
+//        User newUser = new User(firstName, lastName);
+//        newUser.setId(newId);
+//        return repository.save(newUser);
+//    }
+
     public User save(String firstName, String lastName) {
-        Long newId = genererateID();
+        boolean alreadyExists = StreamSupport.stream(repository.findAll().spliterator(), false)
+                .anyMatch(u -> u.getFirstName().equalsIgnoreCase(firstName.trim()) &&
+                        u.getLastName().equalsIgnoreCase(lastName.trim()));
+        if (alreadyExists) {
+            throw new RepositoryException("Exista deja un utilizator cu numele " + firstName + " " + lastName + "!");
+        }
+
         User newUser = new User(firstName, lastName);
-        newUser.setId(newId);
-        return repository.save(newUser);
+        User existing = repository.save(newUser);
+        if (existing != null) {
+            throw new RepositoryException("Utilizatorul nu a putut fi salvat (exista deja)!");
+        }
+        return newUser;
     }
 
     @Override
@@ -91,5 +108,27 @@ public class UserSv implements Service<User> {
             throw new IllegalArgumentException("ID-ul nu poate fi null!");
         }
         return Optional.ofNullable(repository.findOne(id));
+    }
+
+    /**
+     * Deletes a user identified by their first and last name, along with their friendships.
+     *
+     * @param firstName the user's first name
+     * @param lastName  the user's last name
+     * @return an {@link Optional} containing the deleted user, or empty if not found
+     * @throws IllegalArgumentException if firstName or lastName is null
+     * @throws RepositoryException      if a database access error occurs
+     */
+    public Optional<User> deleteByName(String firstName, String lastName) {
+        if (firstName == null || lastName == null) {
+            throw new IllegalArgumentException("Prenumele si numele nu pot fi null!");
+        }
+
+        Optional<User> userFound = StreamSupport.stream(repository.findAll().spliterator(), false)
+                .filter(u -> u.getFirstName().equalsIgnoreCase(firstName.trim()) &&
+                        u.getLastName().equalsIgnoreCase(lastName.trim()))
+                .findFirst();
+
+        return userFound.flatMap(u -> delete(u.getId()));
     }
 }

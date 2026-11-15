@@ -3,6 +3,7 @@ package UI;
 import domain.Friendship;
 import domain.User;
 import domain.validator.ValidationException;
+import repository.RepositoryException;
 import service.FriendshipSv;
 import service.NetworkSv;
 import service.UserCriteria;
@@ -45,43 +46,48 @@ public class Console {
         String lastName = scanner.nextLine();
 
         try {
-            userService.save(firstName, lastName);
-            System.out.print("User was added successfully!\n");
-        } catch (ValidationException e) {
+            User savedUser = userService.save(firstName, lastName);
+            System.out.println("User was added successfully with ID: " + savedUser.getId() + "\n");
+        } catch (ValidationException | RepositoryException | IllegalArgumentException e) {
             System.out.println(e.getMessage());
         }
     }
 
     public void addFriendship() {
         Scanner scanner = new Scanner(System.in);
-        try {
-            System.out.print("Please enter first user's ID: ");
-            Long userId1 = scanner.nextLong();
-            System.out.print("Please enter second user's ID: ");
-            Long userId2 = scanner.nextLong();
 
-            friendshipService.save(userId1, userId2);
+        System.out.print("Please enter first user's first name: ");
+        String fn1 = scanner.nextLine();
+        System.out.print("Please enter first user's last name: ");
+        String ln1 = scanner.nextLine();
+
+        System.out.print("Please enter second user's first name: ");
+        String fn2 = scanner.nextLine();
+        System.out.print("Please enter second user's last name: ");
+        String ln2 = scanner.nextLine();
+
+        try {
+            friendshipService.saveByNames(fn1, ln1, fn2, ln2);
             System.out.println("Friendship added successfully!");
-        } catch (InputMismatchException e) {
-            System.out.println("Eroare: ID-urile trebuie sa fie numere intregi!");
-        } catch (ValidationException | IllegalArgumentException e) {
+        } catch (ValidationException | RepositoryException | IllegalArgumentException e) {
             System.out.println(e.getMessage());
         }
     }
 
     public void removeUser() {
         Scanner scanner = new Scanner(System.in);
-        try {
-            System.out.print("Please enter user's ID: ");
-            Long userId = scanner.nextLong();
 
-            userService.delete(userId).ifPresentOrElse(
-                    u -> System.out.print("User was deleted successfully!\n"),
-                    () -> System.out.println("Utilizatorul cu ID-ul respectiv nu a fost gasit!")
+        System.out.print("Please enter user's first name: ");
+        String firstName = scanner.nextLine();
+        System.out.print("Please enter user's last name: ");
+        String lastName = scanner.nextLine();
+
+        try {
+            userService.deleteByName(firstName, lastName).ifPresentOrElse(
+                    u -> System.out.print("User " + u.getFirstName() + " " + u.getLastName() + " was deleted successfully!\n"),
+                    () -> System.out.println("Utilizatorul " + firstName + " " + lastName + " nu a fost gasit!")
             );
-        } catch (InputMismatchException e) {
-            System.out.println("Eroare: ID-ul introdus trebuie sa fie un numar valid!");
-        } catch (ValidationException | IllegalArgumentException e) {
+        } catch (ValidationException | RepositoryException | IllegalArgumentException e) {
             System.out.println(e.getMessage());
         }
     }
@@ -102,7 +108,7 @@ public class Console {
         try {
             friendshipService.deleteByNames(fn1, ln1, fn2, ln2);
             System.out.print("Friendship between " + fn1 + " " + ln1 + " and " + fn2 + " " + ln2 + " was deleted successfully!\n");
-        } catch (ValidationException e) {
+        } catch (ValidationException | RepositoryException e) {
             System.out.println(e.getMessage());
         }
     }
@@ -128,23 +134,6 @@ public class Console {
         System.out.println();
     }
 
-    public void filterUsersByCriteria() {
-        Scanner scanner = new Scanner(System.in);
-        System.out.print("Introduceti prefixul pentru prenume sau nume: ");
-        String prefix = scanner.nextLine();
-
-        Predicate<User> prefixFilter = UserCriteria.nameStartsWith(prefix);
-        Predicate<User> compositeFilter = prefixFilter.and(UserCriteria::hasLongName);
-
-        System.out.println("Utilizatori cu prefixul '" + prefix + "' si lungime prenume >= 5:");
-        List<User> results = userService.filter(compositeFilter);
-        if (results.isEmpty()) {
-            System.out.println("Niciun utilizator gasit conform criteriilor.");
-        } else {
-            results.forEach(System.out::println);
-        }
-        System.out.println();
-    }
 
     public void menu() {
         System.out.println("1. Add User");
@@ -155,7 +144,6 @@ public class Console {
         System.out.println("6. Show Friendships");
         System.out.println("7. Nr communities");
         System.out.println("8. Show biggest community");
-        System.out.println("9. Filter users by criteria (Demonstratie Predicate)");
         System.out.println("10. Exit");
     }
 }
