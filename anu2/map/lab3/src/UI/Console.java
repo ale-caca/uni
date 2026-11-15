@@ -6,7 +6,6 @@ import domain.validator.ValidationException;
 import repository.RepositoryException;
 import service.FriendshipSv;
 import service.NetworkSv;
-import service.UserCriteria;
 import service.UserSv;
 
 import java.util.InputMismatchException;
