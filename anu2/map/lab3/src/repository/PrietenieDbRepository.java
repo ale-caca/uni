@@ -4,6 +4,8 @@ import domain.Friendship;
 import domain.User;
 import domain.validator.Validation;
 import domain.validator.ValidationException;
+import util.paging.Page;
+import util.paging.Pageable;
 
 import java.sql.*;
 import java.time.LocalDateTime;
@@ -12,7 +14,7 @@ import java.util.List;
 import java.util.stream.StreamSupport;
 
 /**
- * JDBC repository implementation for managing {@link Friendship} entities in a PostgreSQL database.
+ * JDBC repository implementation for managing Friendship entities in a PostgreSQL database.
  */
 public class PrietenieDbRepository implements Repository<Long, Friendship> {
     private final Validation<Friendship> validator;
@@ -34,6 +36,74 @@ public class PrietenieDbRepository implements Repository<Long, Friendship> {
         this.user = user;
         this.password = password;
     }
+
+    /**
+     * Retrieves a paginated list of friends for the specified user directly in SQL
+     * using a single JOIN query and computes the total friend count over the same connection.
+     *
+     * @param userId   the identifier of the user whose friends are queried
+     * @param pageable the pagination parameters (zero-based page number and positive page size)
+     * @return a Page containing the user's friends on the requested page and the total number of friends
+     * @throws IllegalArgumentException if userId is null or pagination parameters are invalid
+     * @throws RepositoryException if a database access error occurs
+     */
+    public Page<User> findFriendsOnPage(Long userId, Pageable pageable) {
+        if (userId == null) {
+            throw new IllegalArgumentException("ID-ul utilizatorului nu poate fi null!");
+        }
+        if (pageable == null || pageable.getPageNumber() < 0 || pageable.getPageSize() <= 0) {
+            throw new IllegalArgumentException("Parametrii de paginare sunt invalizi (pageNumber >= 0, pageSize > 0)!");
+        }
+
+        List<User> friends = new ArrayList<>();
+        String countSql = "SELECT COUNT(*) AS total " +
+                "FROM friendships f " +
+                "JOIN users u ON u.id = CASE WHEN f.id1 = ? THEN f.id2 ELSE f.id1 END " +
+                "WHERE f.id1 = ? OR f.id2 = ?";
+
+        String pageSql = "SELECT u.id, u.first_name, u.last_name " +
+                "FROM friendships f " +
+                "JOIN users u ON u.id = CASE WHEN f.id1 = ? THEN f.id2 ELSE f.id1 END " +
+                "WHERE f.id1 = ? OR f.id2 = ? " +
+                "ORDER BY u.id LIMIT ? OFFSET ?";
+
+        try (Connection connection = DriverManager.getConnection(url, user, password)) {
+            int totalCount = 0;
+            try (PreparedStatement countStmt = connection.prepareStatement(countSql)) {
+                countStmt.setLong(1, userId);
+                countStmt.setLong(2, userId);
+                countStmt.setLong(3, userId);
+                try (ResultSet countRs = countStmt.executeQuery()) {
+                    if (countRs.next()) {
+                        totalCount = countRs.getInt("total");
+                    }
+                }
+            }
+
+            try (PreparedStatement pageStmt = connection.prepareStatement(pageSql)) {
+                pageStmt.setLong(1, userId);
+                pageStmt.setLong(2, userId);
+                pageStmt.setLong(3, userId);
+                pageStmt.setInt(4, pageable.getPageSize());
+                pageStmt.setInt(5, pageable.getPageNumber() * pageable.getPageSize());
+                try (ResultSet pageRs = pageStmt.executeQuery()) {
+                    while (pageRs.next()) {
+                        User friend = new User(
+                                pageRs.getString("first_name"),
+                                pageRs.getString("last_name")
+                        );
+                        friend.setId(pageRs.getLong("id"));
+                        friends.add(friend);
+                    }
+                }
+            }
+
+            return new Page<>(friends, totalCount);
+        } catch (SQLException e) {
+            throw new RepositoryException("Eroare la paginarea prietenilor din baza de date: " + e.getMessage(), e);
+        }
+    }
+
 
     /**
      * Finds a friendship by its assigned identifier.

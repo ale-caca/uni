@@ -3,6 +3,8 @@ package repository;
 import domain.User;
 import domain.validator.Validation;
 import domain.validator.ValidationException;
+import util.paging.Page;
+import util.paging.Pageable;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -11,7 +13,7 @@ import java.util.List;
 /**
  * JDBC repository implementation for managing User entities in a PostgreSQL database.
  */
-public class UtilizatorDbRepository implements Repository<Long, User> {
+public class UtilizatorDbRepository implements PagingRepository<Long, User> {
     private final Validation<User> validator;
     private final String url;
     private final String user;
@@ -30,6 +32,51 @@ public class UtilizatorDbRepository implements Repository<Long, User> {
         this.url = url;
         this.user = user;
         this.password = password;
+    }
+
+
+    /**
+     * Retrieves a page of users from the database using SQL pagination and computes
+     * the total number of users over the same JDBC connection.
+     *
+     * @param pageable the pagination parameters (zero-based page number and positive page size)
+     * @return a Page containing the users on the requested page and the total user count
+     * @throws IllegalArgumentException if pageable is null, pageNumber < 0, or pageSize <= 0
+     * @throws RepositoryException      if a database access error occurs
+     */
+    @Override
+    public Page<User> findAllOnPage(Pageable pageable) {
+        if (pageable == null || pageable.getPageNumber() < 0 || pageable.getPageSize() <= 0) {
+            throw new IllegalArgumentException("Parametrii de paginare sunt invalizi (pageNumber >= 0, pageSize > 0)!");
+        }
+
+        List<User> users = new ArrayList<>();
+        String countSql = "SELECT COUNT(*) AS total FROM users";
+        String pageSql = "SELECT id, first_name, last_name FROM users ORDER BY id LIMIT ? OFFSET ?";
+
+        try (Connection connection = DriverManager.getConnection(url, user, password)) {
+            int totalCount = 0;
+            try (PreparedStatement countStmt = connection.prepareStatement(countSql);
+                 ResultSet countRs = countStmt.executeQuery()) {
+                if (countRs.next()) {
+                    totalCount = countRs.getInt("total");
+                }
+            }
+
+            try (PreparedStatement pageStmt = connection.prepareStatement(pageSql)) {
+                pageStmt.setInt(1, pageable.getPageSize());
+                pageStmt.setInt(2, pageable.getPageNumber() * pageable.getPageSize());
+                try (ResultSet pageRs = pageStmt.executeQuery()) {
+                    while (pageRs.next()) {
+                        users.add(extractUser(pageRs));
+                    }
+                }
+            }
+
+            return new Page<>(users, totalCount);
+        } catch (SQLException e) {
+            throw new RepositoryException("Eroare la paginarea utilizatorilor din baza de date: " + e.getMessage(), e);
+        }
     }
 
     /**

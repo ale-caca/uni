@@ -44,7 +44,8 @@ public class Main {
         FriendshipSv friendshipService = new FriendshipSv(friendshipRepository, userRepository);
         NetworkSv networkSv = new NetworkSv(userService);
 
-        Console console = new Console(userService, friendshipService, networkSv);
+        int pageSize=factory.getPageSize();
+        Console console = new Console(userService, friendshipService, networkSv, pageSize);
 
         Scanner scanner = new Scanner(System.in);
         boolean condition = true;
@@ -78,6 +79,9 @@ public class Main {
                         break;
                     case 8:
                         console.showBiggestCommunity();
+                        break;
+                    case 9:
+                        console.showUserFriends();
                         break;
                     case 10:
                         condition = false;

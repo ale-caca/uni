@@ -100,7 +100,29 @@ public class RepositoryFactory {
                 new PrietenieDbRepository(validator,
                         properties.getProperty("db.url"),
                         properties.getProperty("db.user"),
-                        properties.getProperty("db.password")));
+                            properties.getProperty("db.password")));
+    }
+
+    /**
+     * Reads and validates the configured page size from {@code config.properties}.
+     *
+     * @return the positive integer page size
+     * @throws IllegalArgumentException if {@code page.size} is missing, non-numeric, or not strictly positive
+     */
+    public int getPageSize() {
+        String rawPageSize = properties.getProperty("page.size");
+        if (rawPageSize == null || rawPageSize.isBlank()) {
+            throw new IllegalArgumentException("Proprietatea page.size lipseste din config.properties!");
+        }
+        try {
+            int pageSize = Integer.parseInt(rawPageSize.trim());
+            if (pageSize <= 0) {
+                throw new IllegalArgumentException("Proprietatea page.size trebuie sa fie strict pozitiva!");
+            }
+            return pageSize;
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Proprietatea page.size trebuie sa fie un numar intreg valid!");
+        }
     }
 
     public Repository<Long, User> createUtilizatorRepository(Validation<User> validator) {
